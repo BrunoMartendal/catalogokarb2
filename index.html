@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Meu Catálogo Online - Admin</title>
-    <!-- Carrega o Tailwind CSS para estilização moderna e responsiva -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
@@ -36,7 +35,6 @@
     </style>
 </head>
 <body class="bg-gray-100 text-gray-800">
-    <!-- Cabeçalho Principal -->
     <header class="bg-white shadow-md py-6">
         <div class="container mx-auto px-4 flex justify-between items-center">
             <h1 class="text-3xl font-bold text-blue-600">Meu Catálogo de Produtos</h1>
@@ -51,21 +49,16 @@
         </div>
     </header>
 
-    <!-- Conteúdo Principal - Catálogo (Visível por padrão) -->
     <main id="catalog-view" class="container mx-auto px-4 py-8">
         <p class="text-center text-lg mb-8">Confira nossa seleção de produtos incríveis!</p>
 
-        <!-- Mensagem de carregamento -->
         <div id="loading-catalog" class="text-center text-gray-600 text-lg mt-8 hidden">
             Carregando produtos...
         </div>
 
-        <!-- Grade de Produtos -->
         <div id="product-grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-            <!-- Os cards de produtos serão carregados aqui via JavaScript do Firestore -->
-        </div>
+            </div>
 
-        <!-- Seção de Contato no Rodapé da Página -->
         <div class="text-center mt-12 p-6 bg-white rounded-lg shadow-md">
             <h2 class="text-2xl font-semibold text-gray-900 mb-4">Tem alguma dúvida ou quer fazer um pedido?</h2>
             <p class="text-gray-700 mb-6">Entre em contato conosco pelo WhatsApp. Será um prazer atendê-lo(a)!</p>
@@ -76,14 +69,12 @@
         </div>
     </main>
 
-    <!-- Conteúdo Principal - Painel Admin (Oculto por padrão) -->
     <main id="admin-view" class="container mx-auto px-4 py-8 hidden">
         <h2 class="text-3xl font-bold text-gray-800 mb-6 text-center">Painel de Administração de Produtos</h2>
         <p class="text-sm text-gray-600 text-center mb-4">
             Seu ID de Usuário (para dados privados): <span id="user-id" class="font-semibold text-blue-700 break-all">Carregando...</span>
         </p>
 
-        <!-- Formulário para Adicionar/Editar Produto -->
         <div class="bg-white rounded-lg shadow-md p-6 mb-8">
             <h3 id="form-title" class="text-2xl font-semibold text-gray-800 mb-4">Adicionar Novo Produto</h3>
             <form id="product-form" class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -124,11 +115,9 @@
             </form>
         </div>
 
-        <!-- Lista de Produtos Existentes -->
         <div class="bg-white rounded-lg shadow-md p-6">
             <h3 class="text-2xl font-semibold text-gray-800 mb-4">Produtos Cadastrados</h3>
             <div id="admin-product-list" class="space-y-4">
-                <!-- Produtos serão listados aqui -->
                 <p id="no-products-message" class="text-gray-600 text-center hidden">Nenhum produto cadastrado ainda. Use o formulário acima para adicionar!</p>
                 <div id="loading-admin-products" class="text-center text-gray-600 text-lg mt-8 hidden">
                     Carregando produtos...
@@ -137,10 +126,8 @@
         </div>
     </main>
 
-    <!-- Modal de Detalhes do Produto (Visível no Catálogo) -->
     <div id="product-modal" class="fixed inset-0 flex items-center justify-center z-50 hidden modal-overlay">
         <div class="modal-content bg-white rounded-lg shadow-xl p-6 w-11/12 md:w-2/3 lg:w-1/2 relative">
-            <!-- Botão para fechar o modal -->
             <button id="close-modal" class="absolute top-3 right-3 text-gray-500 hover:text-gray-800 text-2xl font-bold">&times;</button>
             <div class="flex flex-col md:flex-row gap-6">
                 <img id="modal-image" src="" alt="Imagem do Produto" class="w-full md:w-1/2 h-64 object-cover rounded-lg">
@@ -150,7 +137,6 @@
                     <p id="modal-description" class="text-gray-700 mb-4"></p>
                     <p id="modal-stock" class="text-gray-600 text-sm mb-2"></p>
                     <p id="modal-variations" class="text-gray-600 text-sm mb-4"></p>
-                    <!-- Botão de contato via WhatsApp no modal -->
                     <a id="modal-whatsapp-button" href="#" target="_blank" class="bg-green-500 hover:bg-green-600 text-white font-semibold py-2 px-4 rounded-full shadow-md text-sm transition duration-300 ease-in-out">
                         <img src="https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg" alt="WhatsApp Icon" class="inline-block w-5 h-5 mr-1">
                         Pedir via WhatsApp
@@ -160,15 +146,11 @@
         </div>
     </div>
 
-    <!-- Firebase SDKs -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
         import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
         import { getFirestore, collection, addDoc, getDocs, doc, updateDoc, deleteDoc, onSnapshot, query, orderBy } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-        // Variáveis globais fornecidas pelo ambiente Canvas (MANDATÓRIO)
-        // No GitHub Pages, __app_id e __firebase_config não são definidos, então usamos valores padrão.
-        // O __initial_auth_token também não é definido, então usamos signInAnonymously.
         const firebaseConfig = {
             apiKey: "AIzaSyDcUtmDRPqA7QSbHb4fsU8Ss0vvDTL-C_M",
             authDomain: "catalogokarb.firebaseapp.com",
@@ -177,20 +159,19 @@
             messagingSenderId: "393810027391",
             appId: "1:393810027391:web:ac5bddcfe1790b1b6af04a"
         };
-        // Definindo appId para o projectId do Firebase, que será usado nos caminhos do Firestore
         const appId = firebaseConfig.projectId;
 
         const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
 
-        // Inicializa o Firebase
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
         const auth = getAuth(app);
 
         let userId = null; // Para armazenar o ID do usuário autenticado
-        let productsCollectionRef = null; // Referência da coleção de produtos do usuário
+        // productsCollectionRef agora aponta para a coleção global de produtos
+        const productsCollectionRef = collection(db, 'artifacts', appId, 'products'); // <--- CORREÇÃO AQUI
 
-        // Elementos da UI
+        // Elementos da UI (seu código original)
         const viewCatalogBtn = document.getElementById('view-catalog-btn');
         const viewAdminBtn = document.getElementById('view-admin-btn');
         const catalogView = document.getElementById('catalog-view');
@@ -200,7 +181,7 @@
         const loadingAdminProducts = document.getElementById('loading-admin-products');
         const noProductsMessage = document.getElementById('no-products-message');
 
-        // Elementos do formulário de produto
+        // Elementos do formulário de produto (seu código original)
         const productForm = document.getElementById('product-form');
         const formTitle = document.getElementById('form-title');
         const productNameInput = document.getElementById('product-name');
@@ -215,10 +196,10 @@
         const cancelEditBtn = document.getElementById('cancel-edit-btn');
         let editingProductId = null; // Para controlar qual produto está sendo editado
 
-        // Elementos da lista de produtos no admin
+        // Elementos da lista de produtos no admin (seu código original)
         const adminProductList = document.getElementById('admin-product-list');
 
-        // Elementos do modal do catálogo
+        // Elementos do modal do catálogo (seu código original)
         const productModal = document.getElementById('product-modal');
         const closeModalButton = document.getElementById('close-modal');
         const modalImage = document.getElementById('modal-image');
@@ -233,7 +214,7 @@
 
         // Alterna entre a visualização do catálogo e do painel de administração
         function showView(viewId) {
-            console.log("Attempting to show view:", viewId); // Adicionado para depuração
+            console.log("Attempting to show view:", viewId);
             catalogView.classList.add('hidden');
             adminView.classList.add('hidden');
             if (viewId === 'catalog') {
@@ -269,12 +250,7 @@
             productGrid.innerHTML = ''; // Limpa a grade atual
             loadingCatalog.classList.remove('hidden');
 
-            if (!productsCollectionRef) {
-                loadingCatalog.textContent = 'Autenticando...';
-                return;
-            }
-
-            // onSnapshot para atualizações em tempo real
+            // productsCollectionRef já é a referência global
             onSnapshot(productsCollectionRef, (snapshot) => {
                 loadingCatalog.classList.add('hidden');
                 productGrid.innerHTML = ''; // Limpa a grade antes de renderizar
@@ -344,12 +320,7 @@
             loadingAdminProducts.classList.remove('hidden');
             noProductsMessage.classList.add('hidden');
 
-            if (!productsCollectionRef) {
-                loadingAdminProducts.textContent = 'Autenticando...';
-                return;
-            }
-
-            // onSnapshot para atualizações em tempo real
+            // productsCollectionRef já é a referência global
             onSnapshot(query(productsCollectionRef, orderBy('name')), (snapshot) => {
                 loadingAdminProducts.classList.add('hidden');
                 adminProductList.innerHTML = ''; // Limpa a lista antes de renderizar
@@ -414,13 +385,13 @@
 
             try {
                 if (editingProductId) {
-                    // Atualiza produto existente
-                    const productRef = doc(db, `artifacts/${appId}/users/${userId}/products`, editingProductId);
+                    // Atualiza produto existente (agora no caminho global)
+                    const productRef = doc(db, 'artifacts', appId, 'products', editingProductId); // <--- CORREÇÃO AQUI
                     await updateDoc(productRef, productData);
                     showMessage('Produto atualizado com sucesso!', 'success');
                 } else {
-                    // Adiciona novo produto
-                    await addDoc(productsCollectionRef, productData);
+                    // Adiciona novo produto (usando a referência global)
+                    await addDoc(productsCollectionRef, productData); // productsCollectionRef já é o caminho correto
                     showMessage('Produto adicionado com sucesso!', 'success');
                 }
                 productForm.reset(); // Limpa o formulário
@@ -439,10 +410,10 @@
 
         // Preenche o formulário para edição
         async function editProduct(id) {
-            console.log("Editando produto com ID:", id); // Log para depuração
+            console.log("Editando produto com ID:", id);
             try {
-                const productRef = doc(db, `artifacts/${appId}/users/${userId}/products`, id);
-                console.log("Caminho do documento Firestore:", productRef.path); // Log para depuração
+                const productRef = doc(db, 'artifacts', appId, 'products', id); // <--- CORREÇÃO AQUI
+                console.log("Caminho do documento Firestore:", productRef.path);
                 const productSnap = await getDoc(productRef);
 
                 if (productSnap.exists()) {
@@ -460,12 +431,11 @@
                     editingProductId = id; // Define o ID do produto que está sendo editado
                     showMessage('Produto carregado para edição!', 'info');
                 } else {
-                    console.warn("Produto não encontrado no Firestore com ID:", id); // Log para depuração
+                    console.warn("Produto não encontrado no Firestore com ID:", id);
                     showMessage('Produto não encontrado para edição.', 'error');
                 }
             } catch (e) {
                 console.error("Erro ao carregar produto para edição: ", e);
-                // Verifique se o erro é de permissão
                 if (e.code === 'permission-denied') {
                     showMessage('Erro de permissão: Verifique as regras do Firestore.', 'error');
                 } else {
@@ -476,12 +446,11 @@
 
         // Deleta um produto do Firestore
         async function deleteProduct(id) {
-            // Implementar um modal de confirmação em vez de alert/confirm
-            const confirmDelete = window.confirm("Tem certeza que deseja excluir este produto?"); // Usando confirm temporariamente, idealmente um modal customizado
+            const confirmDelete = window.confirm("Tem certeza que deseja excluir este produto?");
             if (!confirmDelete) return;
 
             try {
-                const productRef = doc(db, `artifacts/${appId}/users/${userId}/products`, id);
+                const productRef = doc(db, 'artifacts', appId, 'products', id); // <--- CORREÇÃO AQUI
                 await deleteDoc(productRef);
                 showMessage('Produto excluído com sucesso!', 'success');
             } catch (e) {
@@ -496,18 +465,11 @@
             if (user) {
                 userId = user.uid;
                 userIdSpan.textContent = userId;
-                // Define a referência da coleção de produtos para o usuário autenticado
-                productsCollectionRef = collection(db, `artifacts/${appId}/users/${userId}/products`);
                 console.log("Firestore initialized for user:", userId);
-                console.log("Collection path:", productsCollectionRef.path); // Log do caminho da coleção
-
-                // Carrega os produtos iniciais (catálogo e admin)
-                renderCatalogProducts();
-                renderAdminProducts(); // Garante que a lista admin também é carregada ao autenticar
+                console.log("Collection path for products:", productsCollectionRef.path);
             } else {
-                // Se não houver token, tenta autenticar anonimamente
                 try {
-                    if (initialAuthToken) { // initialAuthToken é null no GitHub Pages
+                    if (initialAuthToken) {
                         await signInWithCustomToken(auth, initialAuthToken);
                     } else {
                         await signInAnonymously(auth); // Autenticação anônima para GitHub Pages
@@ -518,12 +480,13 @@
                     userIdSpan.textContent = "Erro de autenticação";
                 }
             }
+            renderCatalogProducts();
+            renderAdminProducts();
         });
 
-        // Event listener para o formulário de produto
+        // Event listener para o formulário de produto (seu código original)
         productForm.addEventListener('submit', (e) => {
-            e.preventDefault(); // Impede o recarregamento da página
-
+            e.preventDefault();
             const productData = {
                 name: productNameInput.value.trim(),
                 price: productPriceInput.value.trim(),
@@ -531,13 +494,12 @@
                 stock: productStockInput.value.trim(),
                 variations: productVariationsInput.value.trim(),
                 imageUrl: productImageURLInput.value.trim(),
-                createdAt: new Date() // Adiciona um timestamp
+                createdAt: new Date()
             };
-
             saveProduct(productData);
         });
 
-        // Event listener para o botão de cancelar edição
+        // Event listener para o botão de cancelar edição (seu código original)
         cancelEditBtn.addEventListener('click', () => {
             productForm.reset();
             cancelEditBtn.classList.add('hidden');
@@ -546,23 +508,23 @@
             editingProductId = null;
         });
 
-        // Event listeners para alternar as views
+        // Event listeners para alternar as views (seu código original)
         viewCatalogBtn.addEventListener('click', () => showView('catalog'));
         viewAdminBtn.addEventListener('click', () => showView('admin'));
 
-        // Fecha o modal de detalhes do produto
+        // Fecha o modal de detalhes do produto (seu código original)
         closeModalButton.addEventListener('click', () => {
             productModal.classList.add('hidden');
         });
 
-        // Fecha o modal se clicar fora do conteúdo do modal
+        // Fecha o modal se clicar fora do conteúdo do modal (seu código original)
         productModal.addEventListener('click', (event) => {
             if (event.target === productModal) {
                 productModal.classList.add('hidden');
             }
         });
 
-        // Exibe a view do catálogo por padrão ao carregar a página
+        // Exibe a view do catálogo por padrão ao carregar a página (seu código original)
         showView('catalog');
     </script>
 </body>
