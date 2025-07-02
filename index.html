@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Meu Catálogo Online - Admin</title>
+    <!-- Carrega o Tailwind CSS para estilização moderna e responsiva -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* Define a fonte Inter como padrão para todo o corpo do documento */
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        /* Estilos para o modal de detalhes do produto e admin */
+        .modal-overlay {
+            background-color: rgba(0, 0, 0, 0.7);
+            z-index: 999;
+        }
+        .modal-content {
+            max-height: 90vh; /* Limita a altura para caber na tela */
+            overflow-y: auto; /* Adiciona scroll se o conteúdo for muito grande */
+        }
+        /* Estilo para o botão de carregamento */
+        .loading-spinner {
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            border-left-color: #fff;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="bg-gray-100 text-gray-800">
+    <!-- Cabeçalho Principal -->
+    <header class="bg-white shadow-md py-6">
+        <div class="container mx-auto px-4 flex justify-between items-center">
+            <h1 class="text-3xl font-bold text-blue-600">Meu Catálogo de Produtos</h1>
+            <nav>
+                <button id="view-catalog-btn" class="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-6 rounded-full shadow-lg transition duration-300 ease-in-out mr-4">
+                    Ver Catálogo
+                </button>
+                <button id="view-admin-btn" class="bg-purple-500 hover:bg-purple-600 text-white font-semibold py-2 px-6 rounded-full shadow-lg transition duration-300 ease-in-out">
+                    Painel Admin
+                </button>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Conteúdo Principal - Catálogo (Visível por padrão) -->
+    <main id="catalog-view" class="container mx-auto px-4 py-8">
+        <p class="text-center text-lg mb-8">Confira nossa seleção de produtos incríveis!</p>
+
+        <!-- Mensagem de carregamento -->
+        <div id="loading-catalog" class="text-center text-gray-600 text-lg mt-8 hidden">
+            Carregando produtos...
+        </div>
+
+        <!-- Grade de Produtos -->
+        <div id="product-grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            <!-- Os cards de produtos serão carregados aqui via JavaScript do Firestore -->
+        </div>
+
+        <!-- Seção de Contato no Rodapé da Página -->
+        <div class="text-center mt-12 p-6 bg-white rounded-lg shadow-md">
+            <h2 class="text-2xl font-semibold text-gray-900 mb-4">Tem alguma dúvida ou quer fazer um pedido?</h2>
+            <p class="text-gray-700 mb-6">Entre em contato conosco pelo WhatsApp. Será um prazer atendê-lo(a)!</p>
+            <a href="https://wa.me/5547988608860?text=Olá,%20gostaria%20de%20fazer%20um%20pedido%20ou%20tirar%20uma%20dúvida." target="_blank" class="bg-green-500 hover:bg-green-600 text-white font-semibold py-3 px-8 rounded-full shadow-lg text-lg transition duration-300 ease-in-out">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg" alt="WhatsApp Icon" class="inline-block w-6 h-6 mr-2">
+                Fale Conosco no WhatsApp
+            </a>
+        </div>
+    </main>
+
+    <!-- Conteúdo Principal - Painel Admin (Oculto por padrão) -->
+    <main id="admin-view" class="container mx-auto px-4 py-8 hidden">
+        <h2 class="text-3xl font-bold text-gray-800 mb-6 text-center">Painel de Administração de Produtos</h2>
+        <p class="text-sm text-gray-600 text-center mb-4">
+            Seu ID de Usuário (para dados privados): <span id="user-id" class="font-semibold text-blue-700 break-all">Carregando...</span>
+        </p>
+
+        <!-- Formulário para Adicionar/Editar Produto -->
+        <div class="bg-white rounded-lg shadow-md p-6 mb-8">
+            <h3 id="form-title" class="text-2xl font-semibold text-gray-800 mb-4">Adicionar Novo Produto</h3>
+            <form id="product-form" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label for="product-name" class="block text-gray-700 text-sm font-bold mb-2">Nome do Produto:</label>
+                    <input type="text" id="product-name" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" required>
+                </div>
+                <div>
+                    <label for="product-price" class="block text-gray-700 text-sm font-bold mb-2">Preço (R$):</label>
+                    <input type="text" id="product-price" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" placeholder="Ex: R$ 99,90" required>
+                </div>
+                <div class="md:col-span-2">
+                    <label for="product-description" class="block text-gray-700 text-sm font-bold mb-2">Descrição:</label>
+                    <textarea id="product-description" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline h-24" required></textarea>
+                </div>
+                <div>
+                    <label for="product-stock" class="block text-gray-700 text-sm font-bold mb-2">Estoque:</label>
+                    <input type="text" id="product-stock" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" placeholder="Ex: Disponível, Poucas unidades">
+                </div>
+                <div>
+                    <label for="product-variations" class="block text-gray-700 text-sm font-bold mb-2">Variações (Sabores, Tamanhos, etc.):</label>
+                    <input type="text" id="product-variations" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" placeholder="Ex: Sabores: Morango, Chocolate">
+                </div>
+                <div class="md:col-span-2">
+                    <label for="product-image-url" class="block text-gray-700 text-sm font-bold mb-2">URL da Imagem:</label>
+                    <input type="url" id="product-image-url" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" placeholder="Ex: https://seusite.com/imagens/produto.png" required>
+                    <p class="text-xs text-gray-500 mt-1">A imagem deve ser hospedada externamente (ex: no seu GitHub Pages, Imgur, Cloudinary) e a URL completa deve ser fornecida aqui.</p>
+                </div>
+                <div class="md:col-span-2 flex justify-end gap-4">
+                    <button type="submit" id="submit-product-btn" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-full focus:outline-none focus:shadow-outline flex items-center justify-center">
+                        <span id="submit-btn-text">Adicionar Produto</span>
+                        <div id="submit-btn-spinner" class="loading-spinner ml-2 hidden"></div>
+                    </button>
+                    <button type="button" id="cancel-edit-btn" class="bg-gray-400 hover:bg-gray-500 text-white font-bold py-2 px-4 rounded-full focus:outline-none focus:shadow-outline hidden">
+                        Cancelar Edição
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Lista de Produtos Existentes -->
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <h3 class="text-2xl font-semibold text-gray-800 mb-4">Produtos Cadastrados</h3>
+            <div id="admin-product-list" class="space-y-4">
+                <!-- Produtos serão listados aqui -->
+                <p id="no-products-message" class="text-gray-600 text-center hidden">Nenhum produto cadastrado ainda. Use o formulário acima para adicionar!</p>
+                <div id="loading-admin-products" class="text-center text-gray-600 text-lg mt-8 hidden">
+                    Carregando produtos...
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Modal de Detalhes do Produto (Visível no Catálogo) -->
+    <div id="product-modal" class="fixed inset-0 flex items-center justify-center z-50 hidden modal-overlay">
+        <div class="modal-content bg-white rounded-lg shadow-xl p-6 w-11/12 md:w-2/3 lg:w-1/2 relative">
+            <!-- Botão para fechar o modal -->
+            <button id="close-modal" class="absolute top-3 right-3 text-gray-500 hover:text-gray-800 text-2xl font-bold">&times;</button>
+            <div class="flex flex-col md:flex-row gap-6">
+                <img id="modal-image" src="" alt="Imagem do Produto" class="w-full md:w-1/2 h-64 object-cover rounded-lg">
+                <div class="md:w-1/2">
+                    <h2 id="modal-name" class="text-2xl font-bold text-gray-900 mb-2"></h2>
+                    <p id="modal-price" class="text-blue-600 font-bold text-xl mb-3"></p>
+                    <p id="modal-description" class="text-gray-700 mb-4"></p>
+                    <p id="modal-stock" class="text-gray-600 text-sm mb-2"></p>
+                    <p id="modal-variations" class="text-gray-600 text-sm mb-4"></p>
+                    <!-- Botão de contato via WhatsApp no modal -->
+                    <a id="modal-whatsapp-button" href="#" target="_blank" class="bg-green-500 hover:bg-green-600 text-white font-semibold py-2 px-4 rounded-full shadow-md text-sm transition duration-300 ease-in-out">
+                        <img src="https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg" alt="WhatsApp Icon" class="inline-block w-5 h-5 mr-1">
+                        Pedir via WhatsApp
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase SDKs -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+        import { getFirestore, collection, addDoc, getDocs, doc, updateDoc, deleteDoc, onSnapshot, query, orderBy } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+        // Variáveis globais fornecidas pelo ambiente Canvas (MANDATÓRIO)
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
+        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+
+        // Inicializa o Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const auth = getAuth(app);
+
+        let userId = null; // Para armazenar o ID do usuário autenticado
+        let productsCollectionRef = null; // Referência da coleção de produtos do usuário
+
+        // Elementos da UI
+        const viewCatalogBtn = document.getElementById('view-catalog-btn');
+        const viewAdminBtn = document.getElementById('view-admin-btn');
+        const catalogView = document.getElementById('catalog-view');
+        const adminView = document.getElementById('admin-view');
+        const userIdSpan = document.getElementById('user-id');
+        const loadingCatalog = document.getElementById('loading-catalog');
+        const loadingAdminProducts = document.getElementById('loading-admin-products');
+        const noProductsMessage = document.getElementById('no-products-message');
+
+        // Elementos do formulário de produto
+        const productForm = document.getElementById('product-form');
+        const formTitle = document.getElementById('form-title');
+        const productNameInput = document.getElementById('product-name');
+        const productPriceInput = document.getElementById('product-price');
+        const productDescriptionInput = document.getElementById('product-description');
+        const productStockInput = document.getElementById('product-stock');
+        const productVariationsInput = document.getElementById('product-variations');
+        const productImageURLInput = document.getElementById('product-image-url');
+        const submitProductBtn = document.getElementById('submit-product-btn');
+        const submitBtnText = document.getElementById('submit-btn-text');
+        const submitBtnSpinner = document.getElementById('submit-btn-spinner');
+        const cancelEditBtn = document.getElementById('cancel-edit-btn');
+        let editingProductId = null; // Para controlar qual produto está sendo editado
+
+        // Elementos da lista de produtos no admin
+        const adminProductList = document.getElementById('admin-product-list');
+
+        // Elementos do modal do catálogo
+        const productModal = document.getElementById('product-modal');
+        const closeModalButton = document.getElementById('close-modal');
+        const modalImage = document.getElementById('modal-image');
+        const modalName = document.getElementById('modal-name');
+        const modalPrice = document.getElementById('modal-price');
+        const modalDescription = document.getElementById('modal-description');
+        const modalStock = document.getElementById('modal-stock');
+        const modalVariations = document.getElementById('modal-variations');
+        const modalWhatsappButton = document.getElementById('modal-whatsapp-button');
+
+        // --- Funções de UI ---
+
+        // Alterna entre a visualização do catálogo e do painel de administração
+        function showView(viewId) {
+            catalogView.classList.add('hidden');
+            adminView.classList.add('hidden');
+            if (viewId === 'catalog') {
+                catalogView.classList.remove('hidden');
+                renderCatalogProducts(); // Renderiza o catálogo quando a view é ativada
+            } else {
+                adminView.classList.remove('hidden');
+                renderAdminProducts(); // Renderiza a lista de admin quando a view é ativada
+            }
+        }
+
+        // Exibe uma mensagem temporária (substitui alert)
+        function showMessage(message, type = 'info') {
+            const messageBox = document.createElement('div');
+            messageBox.textContent = message;
+            messageBox.className = `fixed top-4 right-4 p-4 rounded-lg shadow-lg text-white z-[1000]`;
+            if (type === 'success') {
+                messageBox.classList.add('bg-green-500');
+            } else if (type === 'error') {
+                messageBox.classList.add('bg-red-500');
+            } else {
+                messageBox.classList.add('bg-blue-500');
+            }
+            document.body.appendChild(messageBox);
+            setTimeout(() => {
+                messageBox.remove();
+            }, 3000);
+        }
+
+        // Renderiza os produtos na grade do catálogo
+        function renderCatalogProducts() {
+            const productGrid = document.getElementById('product-grid');
+            productGrid.innerHTML = ''; // Limpa a grade atual
+            loadingCatalog.classList.remove('hidden');
+
+            if (!productsCollectionRef) {
+                loadingCatalog.textContent = 'Autenticando...';
+                return;
+            }
+
+            // onSnapshot para atualizações em tempo real
+            onSnapshot(productsCollectionRef, (snapshot) => {
+                loadingCatalog.classList.add('hidden');
+                productGrid.innerHTML = ''; // Limpa a grade antes de renderizar
+                if (snapshot.empty) {
+                    productGrid.innerHTML = '<p class="text-gray-600 text-center md:col-span-4">Nenhum produto cadastrado ainda. Visite o Painel Admin para adicionar!</p>';
+                    return;
+                }
+
+                snapshot.forEach(doc => {
+                    const product = doc.data();
+                    const productId = doc.id;
+                    const productCard = `
+                        <div class="product-card bg-white rounded-lg shadow-lg overflow-hidden cursor-pointer transform transition duration-300 hover:scale-105"
+                             data-id="${productId}"
+                             data-name="${product.name}"
+                             data-description="${product.description}"
+                             data-price="${product.price}"
+                             data-stock="${product.stock || 'Não informado'}"
+                             data-variations="${product.variations || 'Não informado'}"
+                             data-image="${product.imageUrl || 'https://placehold.co/400x300/cccccc/333333?text=Sem+Imagem'}">
+                            <img src="${product.imageUrl || 'https://placehold.co/400x300/cccccc/333333?text=Sem+Imagem'}" alt="${product.name}" class="w-full h-48 object-cover">
+                            <div class="p-4">
+                                <h2 class="text-xl font-semibold text-gray-900 mb-2">${product.name}</h2>
+                                <p class="text-gray-600 text-sm mb-3 line-clamp-2">${product.description}</p>
+                                <div class="flex justify-between items-center">
+                                    <span class="text-blue-600 font-bold text-lg">${product.price}</span>
+                                    <span class="text-gray-500 text-xs">Estoque: ${product.stock || 'N/A'}</span>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    productGrid.insertAdjacentHTML('beforeend', productCard);
+                });
+
+                // Adiciona listeners para abrir o modal após os cards serem renderizados
+                document.querySelectorAll('.product-card').forEach(card => {
+                    card.addEventListener('click', () => {
+                        const name = card.dataset.name;
+                        const description = card.dataset.description;
+                        const price = card.dataset.price;
+                        const stock = card.dataset.stock;
+                        const variations = card.dataset.variations;
+                        const image = card.dataset.image;
+
+                        modalImage.src = image;
+                        modalImage.alt = name;
+                        modalName.textContent = name;
+                        modalPrice.textContent = price;
+                        modalDescription.textContent = description;
+                        modalStock.textContent = `Estoque: ${stock}`;
+                        modalVariations.textContent = `Variações: ${variations}`;
+                        modalWhatsappButton.href = `https://wa.me/5547988608860?text=${encodeURIComponent('Olá, tenho interesse no produto: ' + name)}`;
+
+                        productModal.classList.remove('hidden');
+                    });
+                });
+            }, (error) => {
+                loadingCatalog.classList.add('hidden');
+                console.error("Erro ao carregar produtos do catálogo:", error);
+                productGrid.innerHTML = '<p class="text-red-500 text-center md:col-span-4">Erro ao carregar produtos. Tente novamente mais tarde.</p>';
+            });
+        }
+
+        // Renderiza os produtos na lista do painel de administração
+        function renderAdminProducts() {
+            adminProductList.innerHTML = ''; // Limpa a lista atual
+            loadingAdminProducts.classList.remove('hidden');
+            noProductsMessage.classList.add('hidden');
+
+            if (!productsCollectionRef) {
+                loadingAdminProducts.textContent = 'Autenticando...';
+                return;
+            }
+
+            // onSnapshot para atualizações em tempo real
+            onSnapshot(query(productsCollectionRef, orderBy('name')), (snapshot) => {
+                loadingAdminProducts.classList.add('hidden');
+                adminProductList.innerHTML = ''; // Limpa a lista antes de renderizar
+                if (snapshot.empty) {
+                    noProductsMessage.classList.remove('hidden');
+                    return;
+                }
+
+                snapshot.forEach(doc => {
+                    const product = doc.data();
+                    const productId = doc.id;
+                    const productItem = `
+                        <div class="flex items-center justify-between bg-gray-50 p-4 rounded-lg shadow-sm">
+                            <div class="flex items-center">
+                                <img src="${product.imageUrl || 'https://placehold.co/50x50/cccccc/333333?text=No+Img'}" alt="${product.name}" class="w-12 h-12 object-cover rounded-md mr-4">
+                                <div>
+                                    <h4 class="text-lg font-semibold text-gray-900">${product.name}</h4>
+                                    <p class="text-gray-600 text-sm">${product.price} | Estoque: ${product.stock || 'N/A'}</p>
+                                </div>
+                            </div>
+                            <div class="flex space-x-2">
+                                <button class="edit-product-btn bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 px-3 rounded-full text-sm" data-id="${productId}">
+                                    Editar
+                                </button>
+                                <button class="delete-product-btn bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-3 rounded-full text-sm" data-id="${productId}">
+                                    Excluir
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                    adminProductList.insertAdjacentHTML('beforeend', productItem);
+                });
+
+                // Adiciona listeners para os botões de editar e excluir
+                document.querySelectorAll('.edit-product-btn').forEach(button => {
+                    button.addEventListener('click', (e) => {
+                        const id = e.target.dataset.id;
+                        editProduct(id);
+                    });
+                });
+
+                document.querySelectorAll('.delete-product-btn').forEach(button => {
+                    button.addEventListener('click', (e) => {
+                        const id = e.target.dataset.id;
+                        deleteProduct(id);
+                    });
+                });
+            }, (error) => {
+                loadingAdminProducts.classList.add('hidden');
+                console.error("Erro ao carregar produtos do admin:", error);
+                adminProductList.innerHTML = '<p class="text-red-500 text-center">Erro ao carregar produtos no painel admin.</p>';
+            });
+        }
+
+        // --- Funções do Firestore ---
+
+        // Adiciona ou atualiza um produto no Firestore
+        async function saveProduct(productData) {
+            submitProductBtn.disabled = true;
+            submitBtnText.textContent = editingProductId ? 'Salvando...' : 'Adicionando...';
+            submitBtnSpinner.classList.remove('hidden');
+
+            try {
+                if (editingProductId) {
+                    // Atualiza produto existente
+                    const productRef = doc(db, `artifacts/${appId}/users/${userId}/products`, editingProductId);
+                    await updateDoc(productRef, productData);
+                    showMessage('Produto atualizado com sucesso!', 'success');
+                } else {
+                    // Adiciona novo produto
+                    await addDoc(productsCollectionRef, productData);
+                    showMessage('Produto adicionado com sucesso!', 'success');
+                }
+                productForm.reset(); // Limpa o formulário
+                cancelEditBtn.classList.add('hidden');
+                formTitle.textContent = 'Adicionar Novo Produto';
+                submitBtnText.textContent = 'Adicionar Produto';
+                editingProductId = null; // Reseta o ID de edição
+            } catch (e) {
+                console.error("Erro ao salvar produto: ", e);
+                showMessage('Erro ao salvar produto. Tente novamente.', 'error');
+            } finally {
+                submitProductBtn.disabled = false;
+                submitBtnSpinner.classList.add('hidden');
+            }
+        }
+
+        // Preenche o formulário para edição
+        async function editProduct(id) {
+            try {
+                const productRef = doc(db, `artifacts/${appId}/users/${userId}/products`, id);
+                const productSnap = await getDoc(productRef);
+
+                if (productSnap.exists()) {
+                    const product = productSnap.data();
+                    productNameInput.value = product.name;
+                    productPriceInput.value = product.price;
+                    productDescriptionInput.value = product.description;
+                    productStockInput.value = product.stock || '';
+                    productVariationsInput.value = product.variations || '';
+                    productImageURLInput.value = product.imageUrl || '';
+
+                    formTitle.textContent = 'Editar Produto';
+                    submitBtnText.textContent = 'Salvar Alterações';
+                    cancelEditBtn.classList.remove('hidden');
+                    editingProductId = id; // Define o ID do produto que está sendo editado
+                } else {
+                    showMessage('Produto não encontrado para edição.', 'error');
+                }
+            } catch (e) {
+                console.error("Erro ao carregar produto para edição: ", e);
+                showMessage('Erro ao carregar produto para edição.', 'error');
+            }
+        }
+
+        // Deleta um produto do Firestore
+        async function deleteProduct(id) {
+            // Implementar um modal de confirmação em vez de alert/confirm
+            const confirmDelete = window.confirm("Tem certeza que deseja excluir este produto?"); // Usando confirm temporariamente, idealmente um modal customizado
+            if (!confirmDelete) return;
+
+            try {
+                const productRef = doc(db, `artifacts/${appId}/users/${userId}/products`, id);
+                await deleteDoc(productRef);
+                showMessage('Produto excluído com sucesso!', 'success');
+            } catch (e) {
+                console.error("Erro ao excluir produto: ", e);
+                showMessage('Erro ao excluir produto. Tente novamente.', 'error');
+            }
+        }
+
+        // --- Inicialização e Event Listeners ---
+
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                userId = user.uid;
+                userIdSpan.textContent = userId;
+                // Define a referência da coleção de produtos para o usuário autenticado
+                productsCollectionRef = collection(db, `artifacts/${appId}/users/${userId}/products`);
+                console.log("Firestore initialized for user:", userId);
+
+                // Carrega os produtos iniciais (catálogo e admin)
+                renderCatalogProducts();
+                renderAdminProducts(); // Garante que a lista admin também é carregada ao autenticar
+            } else {
+                // Se não houver token, tenta autenticar anonimamente
+                try {
+                    if (initialAuthToken) {
+                        await signInWithCustomToken(auth, initialAuthToken);
+                    } else {
+                        await signInAnonymously(auth);
+                    }
+                } catch (error) {
+                    console.error("Erro na autenticação:", error);
+                    showMessage("Erro na autenticação. Por favor, recarregue a página.", 'error');
+                    userIdSpan.textContent = "Erro de autenticação";
+                }
+            }
+        });
+
+        // Event listener para o formulário de produto
+        productForm.addEventListener('submit', (e) => {
+            e.preventDefault(); // Impede o recarregamento da página
+
+            const productData = {
+                name: productNameInput.value.trim(),
+                price: productPriceInput.value.trim(),
+                description: productDescriptionInput.value.trim(),
+                stock: productStockInput.value.trim(),
+                variations: productVariationsInput.value.trim(),
+                imageUrl: productImageURLInput.value.trim(),
+                createdAt: new Date() // Adiciona um timestamp
+            };
+
+            saveProduct(productData);
+        });
+
+        // Event listener para o botão de cancelar edição
+        cancelEditBtn.addEventListener('click', () => {
+            productForm.reset();
+            cancelEditBtn.classList.add('hidden');
+            formTitle.textContent = 'Adicionar Novo Produto';
+            submitBtnText.textContent = 'Adicionar Produto';
+            editingProductId = null;
+        });
+
+        // Event listeners para alternar as views
+        viewCatalogBtn.addEventListener('click', () => showView('catalog'));
+        viewAdminBtn.addEventListener('click', () => showView('admin'));
+
+        // Fecha o modal de detalhes do produto
+        closeModalButton.addEventListener('click', () => {
+            productModal.classList.add('hidden');
+        });
+
+        // Fecha o modal se clicar fora do conteúdo do modal
+        productModal.addEventListener('click', (event) => {
+            if (event.target === productModal) {
+                productModal.classList.add('hidden');
+            }
+        });
+
+        // Exibe a view do catálogo por padrão ao carregar a página
+        showView('catalog');
+    </script>
+</body>
+</html>
