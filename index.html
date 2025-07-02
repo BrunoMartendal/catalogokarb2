@@ -167,8 +167,19 @@
         import { getFirestore, collection, addDoc, getDocs, doc, updateDoc, deleteDoc, onSnapshot, query, orderBy } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
         // Variáveis globais fornecidas pelo ambiente Canvas (MANDATÓRIO)
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
+        // No GitHub Pages, __app_id e __firebase_config não são definidos, então usamos valores padrão.
+        // O __initial_auth_token também não é definido, então usamos signInAnonymously.
+        const firebaseConfig = {
+            apiKey: "AIzaSyDcUtmDRPqA7QSbHb4fsU8Ss0vvDTL-C_M",
+            authDomain: "catalogokarb.firebaseapp.com",
+            projectId: "catalogokarb",
+            storageBucket: "catalogokarb.firebasestorage.app",
+            messagingSenderId: "393810027391",
+            appId: "1:393810027391:web:ac5bddcfe1790b1b6af04a"
+        };
+        // Definindo appId para o projectId do Firebase, que será usado nos caminhos do Firestore
+        const appId = firebaseConfig.projectId;
+
         const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
 
         // Inicializa o Firebase
@@ -222,12 +233,13 @@
 
         // Alterna entre a visualização do catálogo e do painel de administração
         function showView(viewId) {
+            console.log("Attempting to show view:", viewId); // Adicionado para depuração
             catalogView.classList.add('hidden');
             adminView.classList.add('hidden');
             if (viewId === 'catalog') {
                 catalogView.classList.remove('hidden');
                 renderCatalogProducts(); // Renderiza o catálogo quando a view é ativada
-            } else {
+            } else { // viewId === 'admin'
                 adminView.classList.remove('hidden');
                 renderAdminProducts(); // Renderiza a lista de admin quando a view é ativada
             }
@@ -485,10 +497,10 @@
             } else {
                 // Se não houver token, tenta autenticar anonimamente
                 try {
-                    if (initialAuthToken) {
+                    if (initialAuthToken) { // initialAuthToken é null no GitHub Pages
                         await signInWithCustomToken(auth, initialAuthToken);
                     } else {
-                        await signInAnonymously(auth);
+                        await signInAnonymously(auth); // Autenticação anônima para GitHub Pages
                     }
                 } catch (error) {
                     console.error("Erro na autenticação:", error);
