@@ -439,8 +439,10 @@
 
         // Preenche o formulário para edição
         async function editProduct(id) {
+            console.log("Editando produto com ID:", id); // Log para depuração
             try {
                 const productRef = doc(db, `artifacts/${appId}/users/${userId}/products`, id);
+                console.log("Caminho do documento Firestore:", productRef.path); // Log para depuração
                 const productSnap = await getDoc(productRef);
 
                 if (productSnap.exists()) {
@@ -456,12 +458,19 @@
                     submitBtnText.textContent = 'Salvar Alterações';
                     cancelEditBtn.classList.remove('hidden');
                     editingProductId = id; // Define o ID do produto que está sendo editado
+                    showMessage('Produto carregado para edição!', 'info');
                 } else {
+                    console.warn("Produto não encontrado no Firestore com ID:", id); // Log para depuração
                     showMessage('Produto não encontrado para edição.', 'error');
                 }
             } catch (e) {
                 console.error("Erro ao carregar produto para edição: ", e);
-                showMessage('Erro ao carregar produto para edição.', 'error');
+                // Verifique se o erro é de permissão
+                if (e.code === 'permission-denied') {
+                    showMessage('Erro de permissão: Verifique as regras do Firestore.', 'error');
+                } else {
+                    showMessage('Erro ao carregar produto para edição. Verifique o console para detalhes.', 'error');
+                }
             }
         }
 
@@ -490,6 +499,7 @@
                 // Define a referência da coleção de produtos para o usuário autenticado
                 productsCollectionRef = collection(db, `artifacts/${appId}/users/${userId}/products`);
                 console.log("Firestore initialized for user:", userId);
+                console.log("Collection path:", productsCollectionRef.path); // Log do caminho da coleção
 
                 // Carrega os produtos iniciais (catálogo e admin)
                 renderCatalogProducts();
