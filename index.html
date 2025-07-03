@@ -147,31 +147,35 @@
     </div>
 
     <script type="module">
+        // Importe as funções necessárias dos SDKs Firebase
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
         import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
         import { getFirestore, collection, addDoc, getDocs, doc, updateDoc, deleteDoc, onSnapshot, query, orderBy } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+        import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-analytics.js";
 
+        // Sua configuração do Firebase para o projeto catalogokarb2
         const firebaseConfig = {
-            apiKey: "AIzaSyDcUtmDRPqA7QSbHb4fsU8Ss0vvDTL-C_M",
-            authDomain: "catalogokarb.firebaseapp.com",
-            projectId: "catalogokarb",
-            storageBucket: "catalogokarb.firebasestorage.app",
-            messagingSenderId: "393810027391",
-            appId: "1:393810027391:web:ac5bddcfe1790b1b6af04a"
+          apiKey: "AIzaSyAAdc9DVkqFf7-1pgOq0sM7NBnfnwgif5Y",
+          authDomain: "catalogokarb2.firebaseapp.com",
+          projectId: "catalogokarb2",
+          storageBucket: "catalogokarb2.firebasestorage.app",
+          messagingSenderId: "941322564204",
+          appId: "1:941322564204:web:a7bf20d7895e2fe469de49",
+          measurementId: "G-Y04K95Q3P7"
         };
-        const appId = firebaseConfig.projectId;
 
-        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
-
+        // Inicializa o Firebase
         const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
-        const auth = getAuth(app);
+        const analytics = getAnalytics(app);
+
+        // O appId será automaticamente 'catalogokarb2' a partir do projectId
+        const appId = firebaseConfig.projectId;
 
         let userId = null; // Para armazenar o ID do usuário autenticado
         // productsCollectionRef agora aponta para a coleção global de produtos
-        const productsCollectionRef = collection(db, 'artifacts', appId, 'products'); // <--- CORREÇÃO AQUI
+        const productsCollectionRef = collection(db, 'artifacts', appId, 'products');
 
-        // Elementos da UI (seu código original)
+        // Elementos da UI
         const viewCatalogBtn = document.getElementById('view-catalog-btn');
         const viewAdminBtn = document.getElementById('view-admin-btn');
         const catalogView = document.getElementById('catalog-view');
@@ -181,7 +185,7 @@
         const loadingAdminProducts = document.getElementById('loading-admin-products');
         const noProductsMessage = document.getElementById('no-products-message');
 
-        // Elementos do formulário de produto (seu código original)
+        // Elementos do formulário de produto
         const productForm = document.getElementById('product-form');
         const formTitle = document.getElementById('form-title');
         const productNameInput = document.getElementById('product-name');
@@ -196,10 +200,10 @@
         const cancelEditBtn = document.getElementById('cancel-edit-btn');
         let editingProductId = null; // Para controlar qual produto está sendo editado
 
-        // Elementos da lista de produtos no admin (seu código original)
+        // Elementos da lista de produtos no admin
         const adminProductList = document.getElementById('admin-product-list');
 
-        // Elementos do modal do catálogo (seu código original)
+        // Elementos do modal do catálogo
         const productModal = document.getElementById('product-modal');
         const closeModalButton = document.getElementById('close-modal');
         const modalImage = document.getElementById('modal-image');
@@ -386,12 +390,12 @@
             try {
                 if (editingProductId) {
                     // Atualiza produto existente (agora no caminho global)
-                    const productRef = doc(db, 'artifacts', appId, 'products', editingProductId); // <--- CORREÇÃO AQUI
+                    const productRef = doc(db, 'artifacts', appId, 'products', editingProductId);
                     await updateDoc(productRef, productData);
                     showMessage('Produto atualizado com sucesso!', 'success');
                 } else {
                     // Adiciona novo produto (usando a referência global)
-                    await addDoc(productsCollectionRef, productData); // productsCollectionRef já é o caminho correto
+                    await addDoc(productsCollectionRef, productData);
                     showMessage('Produto adicionado com sucesso!', 'success');
                 }
                 productForm.reset(); // Limpa o formulário
@@ -412,7 +416,7 @@
         async function editProduct(id) {
             console.log("Editando produto com ID:", id);
             try {
-                const productRef = doc(db, 'artifacts', appId, 'products', id); // <--- CORREÇÃO AQUI
+                const productRef = doc(db, 'artifacts', appId, 'products', id);
                 console.log("Caminho do documento Firestore:", productRef.path);
                 const productSnap = await getDoc(productRef);
 
@@ -450,7 +454,7 @@
             if (!confirmDelete) return;
 
             try {
-                const productRef = doc(db, 'artifacts', appId, 'products', id); // <--- CORREÇÃO AQUI
+                const productRef = doc(db, 'artifacts', appId, 'products', id);
                 await deleteDoc(productRef);
                 showMessage('Produto excluído com sucesso!', 'success');
             } catch (e) {
@@ -469,7 +473,8 @@
                 console.log("Collection path for products:", productsCollectionRef.path);
             } else {
                 try {
-                    if (initialAuthToken) {
+                    // Tenta autenticar anonimamente se não houver token customizado
+                    if (initialAuthToken) { // initialAuthToken será null no GitHub Pages
                         await signInWithCustomToken(auth, initialAuthToken);
                     } else {
                         await signInAnonymously(auth); // Autenticação anônima para GitHub Pages
@@ -480,13 +485,14 @@
                     userIdSpan.textContent = "Erro de autenticação";
                 }
             }
-            renderCatalogProducts();
-            renderAdminProducts();
+            renderCatalogProducts(); // Renderiza produtos do catálogo sempre
+            renderAdminProducts();   // Renderiza produtos do admin sempre (será filtrado por regras)
         });
 
-        // Event listener para o formulário de produto (seu código original)
+        // Event listener para o formulário de produto
         productForm.addEventListener('submit', (e) => {
-            e.preventDefault();
+            e.preventDefault(); // Impede o recarregamento da página
+
             const productData = {
                 name: productNameInput.value.trim(),
                 price: productPriceInput.value.trim(),
@@ -494,37 +500,38 @@
                 stock: productStockInput.value.trim(),
                 variations: productVariationsInput.value.trim(),
                 imageUrl: productImageURLInput.value.trim(),
-                createdAt: new Date()
+                createdAt: new Date() // Adiciona um timestamp para ordenação ou auditoria
             };
+
             saveProduct(productData);
         });
 
-        // Event listener para o botão de cancelar edição (seu código original)
+        // Event listener para o botão de cancelar edição
         cancelEditBtn.addEventListener('click', () => {
-            productForm.reset();
+            productForm.reset(); // Limpa o formulário
             cancelEditBtn.classList.add('hidden');
             formTitle.textContent = 'Adicionar Novo Produto';
             submitBtnText.textContent = 'Adicionar Produto';
-            editingProductId = null;
+            editingProductId = null; // Reseta o ID de edição
         });
 
-        // Event listeners para alternar as views (seu código original)
+        // Event listeners para alternar as views
         viewCatalogBtn.addEventListener('click', () => showView('catalog'));
         viewAdminBtn.addEventListener('click', () => showView('admin'));
 
-        // Fecha o modal de detalhes do produto (seu código original)
+        // Fecha o modal de detalhes do produto
         closeModalButton.addEventListener('click', () => {
             productModal.classList.add('hidden');
         });
 
-        // Fecha o modal se clicar fora do conteúdo do modal (seu código original)
+        // Fecha o modal se clicar fora do conteúdo do modal
         productModal.addEventListener('click', (event) => {
             if (event.target === productModal) {
                 productModal.classList.add('hidden');
             }
         });
 
-        // Exibe a view do catálogo por padrão ao carregar a página (seu código original)
+        // Exibe a view do catálogo por padrão ao carregar a página
         showView('catalog');
     </script>
 </body>
